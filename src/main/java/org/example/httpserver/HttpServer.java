@@ -2,8 +2,11 @@ package org.example.httpserver;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class HttpServer {
+
+  static ConcurrentHashMap<String, String> routes = new ConcurrentHashMap<>();
   private final ServerSocket serverSocket;
   private volatile boolean IS_RUNNING = true;
 
@@ -33,6 +36,11 @@ public class HttpServer {
         throw new HttpServerException("Connection error: " + e.getMessage());
       }
     }
+  }
+
+  // binds route and action to route map
+  public void bind(String route, String action) {
+    routes.put(route, action);
   }
 
   public void stopListening() {

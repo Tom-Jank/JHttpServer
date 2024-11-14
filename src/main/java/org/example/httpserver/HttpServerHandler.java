@@ -1,5 +1,7 @@
 package org.example.httpserver;
 
+import static org.example.httpserver.HttpServer.routes;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -18,8 +20,9 @@ class HttpServerHandler extends Thread {
     try (var out = new PrintWriter(clientSocket.getOutputStream(), true);
         var in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))) {
       try (clientSocket) {
-        switch (getRequestMethod(in)) {
-          case GET -> respond(out);
+        var request = readRequest(in);
+        switch (request.method()) {
+          case GET -> respond(out, request.resource());
           case POST -> throw new HttpServerException("Lmao nice try");
           default -> throw new HttpServerException("Method not supported");
         }
@@ -29,23 +32,24 @@ class HttpServerHandler extends Thread {
     }
   }
 
-  private RequestMethod getRequestMethod(BufferedReader in) {
-    try {
-      String method = Arrays.stream(in.readLine().split(" "))
-          .findFirst().orElseThrow(RuntimeException::new);
-      return RequestMethod.valueOf(method);
-    } catch (IOException e) {
-      throw new HttpServerException("Error reading request: " + e.getMessage());
-    }
-  }
-
-  private void respond(PrintWriter out) {
-    var response = HttpResponse.of("Hello, this is response body of HttpResponse");
+  private void respond(PrintWriter out, String route) {
+    var body = routes.get(route);
+    if (body == null) body = "Something wrong";
+    var response = HttpResponse.of(body);
 
     out.write(response.type() + "\r\n");
     response.headers().forEach(header -> out.write(header + "\r\n"));
     out.write("\r\n");
     out.write(response.body() + "\r\n");
     out.flush();
+  }
+
+  private HttpRequest readRequest(BufferedReader in) {
+    try {
+      String[] requestString = Arrays.stream(in.readLine().split(" ")).toArray(String[]::new);
+      return HttpRequest.of(requestString);
+    } catch (IOException e) {
+      throw new HttpServerException("Error parsing request: " + e.getMessage());
+    }
   }
 }
