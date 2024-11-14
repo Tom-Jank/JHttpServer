@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.time.LocalDateTime;
 import java.util.Arrays;
 
 class HttpServerHandler extends Thread {
@@ -32,21 +31,21 @@ class HttpServerHandler extends Thread {
 
   private RequestMethod getRequestMethod(BufferedReader in) {
     try {
-      return RequestMethod.valueOf(
-          Arrays.stream(in.readLine().split(" ")).findFirst().orElseThrow(RuntimeException::new));
+      String method = Arrays.stream(in.readLine().split(" "))
+          .findFirst().orElseThrow(RuntimeException::new);
+      return RequestMethod.valueOf(method);
     } catch (IOException e) {
       throw new HttpServerException("Error reading request: " + e.getMessage());
     }
   }
 
   private void respond(PrintWriter out) {
-    out.write("HTTP/1.1 200 OK\r\n");
-    out.write("date: " + LocalDateTime.now() + " \r\n");
-    out.write("cache-control: public, max-age: 3600 \r\n");
-    out.write("content-type: text/html \r\n");
+    var response = HttpResponse.of("Hello, this is response body of HttpResponse");
 
+    out.write(response.type() + "\r\n");
+    response.headers().forEach(header -> out.write(header + "\r\n"));
     out.write("\r\n");
-    out.write("body: somebody \r\n");
+    out.write(response.body() + "\r\n");
     out.flush();
   }
 }
