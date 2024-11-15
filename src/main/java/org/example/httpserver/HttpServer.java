@@ -2,12 +2,12 @@ package org.example.httpserver;
 
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class HttpServer {
-
-  static ConcurrentHashMap<String, String> routes = new ConcurrentHashMap<>();
   private final ServerSocket serverSocket;
+  private final ExecutorService executorService = Executors.newFixedThreadPool(10);
   private volatile boolean IS_RUNNING = true;
 
   public HttpServer(int portNumber) {
@@ -30,17 +30,13 @@ public class HttpServer {
   private void connectClients() {
     while (IS_RUNNING) {
       try {
-        new HttpServerHandler(serverSocket.accept()).start();
+        var clientSocket = serverSocket.accept();
+        executorService.submit(new HttpServerHandler(clientSocket));
       } catch (IOException e) {
         if (!IS_RUNNING) break;
         throw new HttpServerException("Connection error: " + e.getMessage());
       }
     }
-  }
-
-  // binds route and action to route map
-  public void bind(String route, String action) {
-    routes.put(route, action);
   }
 
   public void stopListening() {

@@ -10,6 +10,7 @@ import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
 import org.example.httpserver.HttpServer;
+import org.example.httpserver.RouteHolder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,7 +23,7 @@ class HttpServerTest {
   @BeforeEach
   public void setup() {
     httpServer = new HttpServer(PORT_NUMBER);
-    httpServer.bind("/test", "test route");
+    RouteHolder.bindGET("/test", "test route");
     new Thread(httpServer::listen).start();
   }
 
