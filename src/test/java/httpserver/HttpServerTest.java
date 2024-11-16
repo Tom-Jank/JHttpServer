@@ -10,7 +10,7 @@ import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
 import org.example.httpserver.HttpServer;
-import org.example.httpserver.RouteHolder;
+import org.example.httpserver.routing.RouteHolder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

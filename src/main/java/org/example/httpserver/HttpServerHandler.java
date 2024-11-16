@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Arrays;
+import org.example.httpserver.routing.RouteHolder;
 
 class HttpServerHandler implements Runnable {
   private final Socket clientSocket;
@@ -16,40 +17,45 @@ class HttpServerHandler implements Runnable {
 
   @Override
   public void run() {
-    try (var out = new PrintWriter(clientSocket.getOutputStream(), true);
+    try (var out = new PrintWriter(clientSocket.getOutputStream(), false);
         var in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))) {
       try (clientSocket) {
         var request = readRequest(in);
         switch (request.method()) {
           case GET -> respond(out, request.resource());
-          case POST -> throw new HttpServerException("Lmao nice try");
-          default -> throw new HttpServerException("Method not supported");
+          case POST -> writeResponse(out, HttpResponse.badRequest("Post method not supported"));
+          default -> writeResponse(out, HttpResponse.badRequest("Method not supported"));
         }
+      } catch (IOException e) {
+        writeResponse(out, HttpResponse.badRequest("Error parsing request"));
       }
     } catch (IOException e) {
       throw new HttpServerException("Error accepting connection: " + e.getMessage());
     }
   }
 
+  // todo fix a bug where request from postman throws exception because of empty BufferedReader
+  private HttpRequest readRequest(BufferedReader in) throws IOException {
+      String[] requestString = Arrays.stream(in.readLine().split(" ")).toArray(String[]::new);
+      return HttpRequest.of(requestString);
+  }
+
   private void respond(PrintWriter out, String route) {
     var body = RouteHolder.GET.get(route);
-    if (body == null) body = "Something wrong";
-    var response = HttpResponse.of(body);
+    HttpResponse response;
+    if (body == null) {
+      response = HttpResponse.notFound("Resource not found");
+    } else {
+      response = HttpResponse.ok(body);
+    }
+    writeResponse(out, response);
+  }
 
+  private void writeResponse(PrintWriter out, HttpResponse response) {
     out.write(response.type() + "\r\n");
     response.headers().forEach(header -> out.write(header + "\r\n"));
     out.write("\r\n");
     out.write(response.body() + "\r\n");
     out.flush();
-  }
-
-  // todo fix a bug where request from postman throws exception because of empty BufferedReader
-  private HttpRequest readRequest(BufferedReader in) {
-    try {
-      String[] requestString = Arrays.stream(in.readLine().split(" ")).toArray(String[]::new);
-      return HttpRequest.of(requestString);
-    } catch (IOException e) {
-      throw new HttpServerException("Error parsing request: " + e.getMessage());
-    }
   }
 }
