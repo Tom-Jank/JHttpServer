@@ -38,4 +38,16 @@ record HttpResponse(String type, List<String> headers, String body) {
 
     return new HttpResponse(type, headers, body);
   }
+
+
+  static HttpResponse internalServerError(String body) {
+    String type = "HTTP/1.1 500 Internal Server Error";
+    List<String> headers = List.of(
+        "Date: " + LocalDateTime.now(),
+        "Content-Type: text/html; charset=utf-8",
+        "Server: JHttpServer"
+    );
+
+    return new HttpResponse(type, headers, body);
+  }
 }

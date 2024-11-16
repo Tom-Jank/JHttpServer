@@ -22,7 +22,7 @@ class HttpServerHandler implements Runnable {
       try (clientSocket) {
         var request = readRequest(in);
         switch (request.method()) {
-          case GET -> respond(out, request.resource());
+          case GET -> responseTest(out, request.resource());
           case POST -> writeResponse(out, HttpResponse.badRequest("Post method not supported"));
           default -> writeResponse(out, HttpResponse.badRequest("Method not supported"));
         }
@@ -30,7 +30,7 @@ class HttpServerHandler implements Runnable {
         writeResponse(out, HttpResponse.badRequest("Error parsing request"));
       }
     } catch (IOException e) {
-      throw new HttpServerException("Error accepting connection: " + e.getMessage());
+      throw new RuntimeException("Error accepting connection: " + e.getMessage());
     }
   }
 
@@ -47,6 +47,18 @@ class HttpServerHandler implements Runnable {
       response = HttpResponse.notFound("Resource not found");
     } else {
       response = HttpResponse.ok(body);
+    }
+    writeResponse(out, response);
+  }
+
+  private void responseTest(PrintWriter out, String route) {
+    HttpResponse response;
+    var action = RouteHolder.TEST.get(route);
+    try {
+      var result = action.call();
+      response = HttpResponse.ok((String) result);
+    } catch (Exception e) {
+      response = HttpResponse.internalServerError(e.getMessage());
     }
     writeResponse(out, response);
   }

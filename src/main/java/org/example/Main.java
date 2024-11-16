@@ -12,8 +12,7 @@ import org.example.httpserver.routing.RouteHolder;
 public class Main {
   public static void main(String[] args) {
     var server = new HttpServer(8080);
-    RouteHolder.bindGET("/test", "For now action is creating a body :D");
-    RouteHolder.bindGET("/second", "This is a second endpoint");
+    RouteHolder.bindGET("/normal", "This is a second endpoint");
     server.listen();
   }
 }

@@ -14,7 +14,7 @@ public class HttpServer {
     try {
       this.serverSocket = new ServerSocket(portNumber);
     } catch (IOException e) {
-      throw new HttpServerException("Could not initialize socket: " + e.getMessage());
+      throw new RuntimeException("Could not initialize socket: " + e.getMessage());
     }
   }
 
@@ -23,7 +23,7 @@ public class HttpServer {
       System.out.println("Listening on port: " + serverSocket.getLocalPort());
       connectClients();
     } catch (IOException e) {
-      throw new HttpServerException("Exception when listening: " + e.getMessage());
+      throw new RuntimeException("Exception when listening: " + e.getMessage());
     }
   }
 
@@ -34,7 +34,7 @@ public class HttpServer {
         executorService.submit(new HttpServerHandler(clientSocket));
       } catch (IOException e) {
         if (!IS_RUNNING) break;
-        throw new HttpServerException("Connection error: " + e.getMessage());
+        throw new RuntimeException("Connection error: " + e.getMessage());
       }
     }
   }
@@ -46,7 +46,7 @@ public class HttpServer {
         serverSocket.close();
       }
     } catch (IOException e) {
-      throw new HttpServerException("Could not close the socket: " + e.getMessage());
+      throw new RuntimeException("Could not close the socket: " + e.getMessage());
     }
   }
 }
