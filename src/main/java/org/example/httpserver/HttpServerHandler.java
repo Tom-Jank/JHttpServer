@@ -24,6 +24,8 @@ class HttpServerHandler implements Runnable {
         switch (request.method()) {
           case GET -> responseTest(out, request.resource());
           case POST -> writeResponse(out, HttpResponse.badRequest("Post method not supported"));
+          case PUT -> writeResponse(out, HttpResponse.badRequest("PUT method not supported"));
+          case DELETE -> writeResponse(out, HttpResponse.badRequest("DELETE method not supported"));
           default -> writeResponse(out, HttpResponse.badRequest("Method not supported"));
         }
       } catch (IOException e) {
