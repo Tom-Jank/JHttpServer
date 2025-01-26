@@ -23,7 +23,7 @@ class HttpServerTest {
   @BeforeEach
   public void setup() {
     httpServer = new HttpServer(PORT_NUMBER);
-    RouteHolder.bindGET("/test", "test route");
+    RouteHolder.bindGET("/test", () -> { return "test route"; });
     new Thread(httpServer::listen).start();
   }
 

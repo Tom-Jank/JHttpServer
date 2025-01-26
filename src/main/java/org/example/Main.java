@@ -16,7 +16,11 @@ public class Main {
     final TestService testService = new TestService();
     final HttpServer server = new HttpServer(8080);
 
-    RouteHolder.bindGET("/normal", "This is a second endpoint");
+    RouteHolder.bindGET("/hello", Main::helloMessage);
     server.listen();
+  }
+
+  public static String helloMessage() {
+    return "Hello from function!";
   }
 }

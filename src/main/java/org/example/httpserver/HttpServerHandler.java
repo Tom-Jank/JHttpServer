@@ -22,7 +22,7 @@ class HttpServerHandler implements Runnable {
       try (clientSocket) {
         var request = readRequest(in);
         switch (request.method()) {
-          case GET -> responseTest(out, request.resource());
+          case GET -> respond(out, request.resource());
           case POST -> writeResponse(out, HttpResponse.badRequest("Post method not supported"));
           case PUT -> writeResponse(out, HttpResponse.badRequest("PUT method not supported"));
           case DELETE -> writeResponse(out, HttpResponse.badRequest("DELETE method not supported"));
@@ -36,29 +36,16 @@ class HttpServerHandler implements Runnable {
     }
   }
 
-  // todo fix a bug where request from postman throws exception because of empty BufferedReader
   private HttpRequest readRequest(BufferedReader in) throws IOException {
       String[] requestString = Arrays.stream(in.readLine().split(" ")).toArray(String[]::new);
       return HttpRequest.of(requestString);
   }
 
   private void respond(PrintWriter out, String route) {
-    var body = RouteHolder.GET.get(route);
-    HttpResponse response;
-    if (body == null) {
-      response = HttpResponse.notFound("Resource not found");
-    } else {
-      response = HttpResponse.ok(body);
-    }
-    writeResponse(out, response);
-  }
-
-  private void responseTest(PrintWriter out, String route) {
     HttpResponse response;
     var action = RouteHolder.TEST.get(route);
     try {
-      var result = action.call();
-      response = HttpResponse.ok((String) result);
+      response = HttpResponse.ok(action.handle());
     } catch (Exception e) {
       response = HttpResponse.internalServerError(e.getMessage());
     }
