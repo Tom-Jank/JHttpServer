@@ -1,6 +1,6 @@
 package org.example.httpserver;
 
-enum RequestMethod {
+enum HttpRequestMethod {
   GET,
   POST,
   PUT,
