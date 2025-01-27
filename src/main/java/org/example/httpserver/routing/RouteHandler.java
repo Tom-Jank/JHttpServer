@@ -4,3 +4,4 @@ package org.example.httpserver.routing;
 public interface RouteHandler {
   Object handle();
 }
+

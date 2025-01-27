@@ -15,6 +15,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+/*
+*  This class test general behaviour of the http server
+*/
 class HttpServerTest {
   private HttpServer httpServer;
   private static final int PORT_NUMBER = 4200;
@@ -33,14 +36,14 @@ class HttpServerTest {
   }
 
   @Test
-  void shouldRespondToARequest() {
+  void shouldRespondToGETRequest() {
     String something = sendTestRequest();
     assertThat(something).isNotNull();
     assertThat(something).isNotBlank();
   }
 
   @Test
-  void shouldRespondToMultipleRequests() {
+  void shouldRespondToMultipleGETRequests() {
     List<String> responses = new ArrayList<>();
 
     for (int i = 0; i < 10; i++) {
@@ -51,7 +54,7 @@ class HttpServerTest {
     assertThat(responses.size()).isEqualTo(10);
   }
 
-  public static String sendTestRequest() {
+  private static String sendTestRequest() {
     try (var client = HttpClient.newHttpClient()) {
       var request = HttpRequest.newBuilder().uri(URI.create(TEST_URL)).build();
       return client.send(request, HttpResponse.BodyHandlers.ofString()).body();
