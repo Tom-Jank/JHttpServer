@@ -1,10 +1,12 @@
 package org.example;
 
 import org.example.httpserver.HttpServer;
+import org.example.httpserver.routing.RouteHolder;
 
 public class Main {
   public static void main(String[] args) {
     final HttpServer server = new HttpServer(8080);
+    RouteHolder.bindGET("/test", () -> "Hello world!");
     server.listen();
   }
 

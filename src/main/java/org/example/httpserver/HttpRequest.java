@@ -1,7 +1,9 @@
 package org.example.httpserver;
 
-record HttpRequest(HttpRequestMethod method, String resource, String protocol) {
-  static HttpRequest of(String[] request) {
-    return new HttpRequest(HttpRequestMethod.valueOf(request[0]), request[1], request[2]);
+import java.util.Map;
+
+record HttpRequest(HttpRequestMethod method, String resource, String protocol, Map<String, String> headers, String body) {
+  static HttpRequest of(String[] startLine, Map<String, String> headers, String body) {
+    return new HttpRequest(HttpRequestMethod.valueOf(startLine[0]), startLine[1], startLine[2], headers, body);
   }
 }

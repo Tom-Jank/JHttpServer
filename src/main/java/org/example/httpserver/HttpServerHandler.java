@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.Arrays;
+import java.util.HashMap;
 import org.example.httpserver.routing.RouteHolder;
 
 class HttpServerHandler implements Runnable {
@@ -34,8 +34,22 @@ class HttpServerHandler implements Runnable {
   }
 
   private HttpRequest readRequest(BufferedReader in) throws IOException {
-    String[] requestString = Arrays.stream(in.readLine().split(" ")).toArray(String[]::new);
-    return HttpRequest.of(requestString);
+    // read start line
+    String[] startLine = in.readLine().split(" ");
+    if (startLine.length < 3) {
+      throw new IOException("Invalid request");
+    }
+
+    // read headers
+    var headers = new HashMap<String, String>();
+    String line;
+    while ((line = in.readLine()) != null && !line.isEmpty()) {
+      String[] headerParts = line.split(": ", 2);
+      if (headerParts.length == 2) headers.put(headerParts[0], headerParts[1]);
+    }
+
+    // todo read body
+    return HttpRequest.of(startLine, headers, "");
   }
 
   private void handleRequest(HttpRequest request, PrintWriter out) {
