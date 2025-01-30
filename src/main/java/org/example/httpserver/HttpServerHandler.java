@@ -8,6 +8,8 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.Map;
+import org.example.httpserver.routing.RouteHandler;
 import org.example.httpserver.routing.RouteHolder;
 
 class HttpServerHandler implements Runnable {
@@ -41,7 +43,7 @@ class HttpServerHandler implements Runnable {
     }
 
     // read headers
-    var headers = new HashMap<String, String>();
+    Map<String, String> headers = new HashMap<>();
     String line;
     while ((line = in.readLine()) != null && !line.isEmpty()) {
       String[] headerParts = line.split(": ", 2);
@@ -49,13 +51,22 @@ class HttpServerHandler implements Runnable {
     }
 
     // todo read body
-    return HttpRequest.of(startLine, headers, "");
+    StringBuilder bodyContent = new StringBuilder();
+
+    if (headers.containsKey("Content-Length")) {
+      int contentLength = Integer.parseInt(headers.get("Content-Length"));
+      char[] buf = new char[contentLength];
+      int read = in.read(buf, 0, contentLength);
+      if (read > 0) bodyContent.append(buf, 0, read);
+    }
+
+    return HttpRequest.of(startLine, headers, bodyContent.toString());
   }
 
   private void handleRequest(HttpRequest request, PrintWriter out) {
     switch (request.method()) {
-      case GET -> respond(out, request.resource());
-      case POST -> writeResponse(out, HttpResponse.badRequest("Post method not supported"));
+      case GET -> respond(out, request.resource(), request.method());
+      case POST -> respond(out, request.resource(), request.method());
       case PUT -> writeResponse(out, HttpResponse.badRequest("PUT method not supported"));
       case DELETE -> writeResponse(out, HttpResponse.badRequest("DELETE method not supported"));
       case PATCH -> writeResponse(out, HttpResponse.badRequest("PATCH method not supported"));
@@ -63,9 +74,16 @@ class HttpServerHandler implements Runnable {
     }
   }
 
-  private void respond(PrintWriter out, String route) {
+  private void respond(PrintWriter out, String route, HttpRequestMethod method) {
+    // todo of course the endpoint might not be present in a map, therefore it should be handled with relevant exception
+    RouteHandler action;
+    switch (method) {
+      case GET -> action = RouteHolder.getGET(route);
+      case POST -> action = RouteHolder.getPOST(route);
+      default -> throw new RuntimeException("Method not supported");
+    }
+
     HttpResponse response;
-    var action = RouteHolder.GET.get(route);
     try {
       String jsonResult = serializeFunctionResult(action.handle());
       response = HttpResponse.ok(jsonResult);
