@@ -9,6 +9,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import org.example.httpserver.routing.RouteHandler;
 import org.example.httpserver.routing.RouteHolder;
 
@@ -50,7 +51,6 @@ class HttpServerHandler implements Runnable {
       if (headerParts.length == 2) headers.put(headerParts[0], headerParts[1]);
     }
 
-    // todo read body
     StringBuilder bodyContent = new StringBuilder();
 
     if (headers.containsKey("Content-Length")) {
@@ -65,8 +65,7 @@ class HttpServerHandler implements Runnable {
 
   private void handleRequest(HttpRequest request, PrintWriter out) {
     switch (request.method()) {
-      case GET -> respond(out, request.resource(), request.method());
-      case POST -> respond(out, request.resource(), request.method());
+      case GET, POST -> respond(out, request.resource(), request.method());
       case PUT -> writeResponse(out, HttpResponse.badRequest("PUT method not supported"));
       case DELETE -> writeResponse(out, HttpResponse.badRequest("DELETE method not supported"));
       case PATCH -> writeResponse(out, HttpResponse.badRequest("PATCH method not supported"));
@@ -75,22 +74,38 @@ class HttpServerHandler implements Runnable {
   }
 
   private void respond(PrintWriter out, String route, HttpRequestMethod method) {
-    // todo of course the endpoint might not be present in a map, therefore it should be handled with relevant exception
-    RouteHandler action;
+    Optional<RouteHandler> handler = getMethodHandler(route, method);
+    HttpResponse response = createResponse(handler, method.toString(), route);
+    writeResponse(out, response);
+  }
+
+  private Optional<RouteHandler> getMethodHandler(String route, HttpRequestMethod method) {
     switch (method) {
-      case GET -> action = RouteHolder.getGET(route);
-      case POST -> action = RouteHolder.getPOST(route);
+      case GET -> {
+        return RouteHolder.getGET(route);
+      }
+      case POST -> {
+        return RouteHolder.getPOST(route);
+      }
       default -> throw new RuntimeException("Method not supported");
     }
+  }
 
-    HttpResponse response;
-    try {
-      String jsonResult = serializeFunctionResult(action.handle());
-      response = HttpResponse.ok(jsonResult);
-    } catch (Exception e) {
-      response = HttpResponse.internalServerError(e.getMessage());
+  private HttpResponse createResponse(Optional<RouteHandler> handler, String method, String route) {
+    if (handler.isPresent()) {
+      return invokeHandlerReturnResponse(handler.get());
+    } else {
+      return HttpResponse.notFound(method.toString() + " " + route + " " + "doesn't exist.");
     }
-    writeResponse(out, response);
+  }
+
+  private HttpResponse invokeHandlerReturnResponse(RouteHandler handler) {
+    try {
+      String jsonResult = serializeFunctionResult(handler.handle());
+      return HttpResponse.ok(jsonResult);
+    } catch (Exception e) {
+      return HttpResponse.internalServerError(e.getMessage());
+    }
   }
 
   private String serializeFunctionResult(Object result) throws JsonProcessingException {

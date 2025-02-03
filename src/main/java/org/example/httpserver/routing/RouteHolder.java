@@ -1,5 +1,6 @@
 package org.example.httpserver.routing;
 
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class RouteHolder {
@@ -9,12 +10,14 @@ public class RouteHolder {
   public static void bindGET(String route, RouteHandler action) {
     GET.put(route, action);
   };
-  public static RouteHandler getGET(String route) {
-    return GET.get(route);
+
+  public static Optional<RouteHandler> getGET(String route) {
+    return Optional.ofNullable(GET.get(route));
   }
 
   public static void bindPOST(String route, RouteHandler action) { POST.put(route, action); };
-  public static RouteHandler getPOST(String route) {
-    return POST.get(route);
+
+  public static Optional<RouteHandler> getPOST(String route) {
+    return Optional.ofNullable(POST.get(route));
   }
 }
