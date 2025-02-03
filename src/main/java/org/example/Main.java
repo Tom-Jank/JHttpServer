@@ -11,11 +11,9 @@ public class Main {
     RouteHolder.bindGET("/void", RouteHandler.bindVoid(Main::doSomethingWithoutReturn));
     RouteHolder.bindPOST("/post", () -> "Post method handled!");
     RouteHolder.bindPOST("/voidPost", RouteHandler.bindVoid(Main::doSomethingWithoutReturn));
-//    RouteHolder.bindPOST("/postBody", postHandler);
     server.listen();
   }
 
-  //todo later create the logic to handle void functions
   public static void doSomethingWithoutReturn() {
     System.out.println("I'm done");
   }
