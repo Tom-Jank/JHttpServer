@@ -37,30 +37,42 @@ class HttpServerHandler implements Runnable {
   }
 
   private HttpRequest readRequest(BufferedReader in) throws IOException {
-    // read start line
-    String[] startLine = in.readLine().split(" ");
+    var startLine = readRequestStartLine(in);
+    var headers = readRequestHeaders(in);
+    var body = readRequestBody(in, headers);
+    return HttpRequest.of(startLine, headers, body);
+  }
+
+  private String[] readRequestStartLine(BufferedReader in) throws IOException {
+    var startLine = in.readLine().split(" ");
     if (startLine.length < 3) {
       throw new IOException("Invalid request");
     }
+    return startLine;
+  }
 
-    // read headers
-    Map<String, String> headers = new HashMap<>();
+  private Map<String, String> readRequestHeaders(BufferedReader in) throws IOException {
+    var headers = new HashMap<String, String>();
     String line;
     while ((line = in.readLine()) != null && !line.isEmpty()) {
+      // todo look if creating an object String[] every time does not hurt performance
       String[] headerParts = line.split(": ", 2);
       if (headerParts.length == 2) headers.put(headerParts[0], headerParts[1]);
     }
+    return headers;
+  }
 
-    StringBuilder bodyContent = new StringBuilder();
-
+  private String readRequestBody(BufferedReader in, Map<String, String> headers) throws IOException {
     if (headers.containsKey("Content-Length")) {
-      int contentLength = Integer.parseInt(headers.get("Content-Length"));
+      var contentLength = Integer.parseInt(headers.get("Content-Length"));
+      var bodyContent = new StringBuilder();
       char[] buf = new char[contentLength];
       int read = in.read(buf, 0, contentLength);
       if (read > 0) bodyContent.append(buf, 0, read);
+      return bodyContent.toString();
+    } else {
+      return "";
     }
-
-    return HttpRequest.of(startLine, headers, bodyContent.toString());
   }
 
   private void handleRequest(HttpRequest request, PrintWriter out) {
@@ -74,12 +86,12 @@ class HttpServerHandler implements Runnable {
   }
 
   private void respond(PrintWriter out, String route, HttpRequestMethod method) {
-    Optional<RouteHandler> handler = getMethodHandler(route, method);
-    HttpResponse response = createResponse(handler, method.toString(), route);
+    var handler = getMethodHandler(route, method);
+    var response = createResponse(handler, method.toString(), route);
     writeResponse(out, response);
   }
 
-  private Optional<RouteHandler> getMethodHandler(String route, HttpRequestMethod method) {
+  private Optional<RouteHandler<?>> getMethodHandler(String route, HttpRequestMethod method) {
     switch (method) {
       case GET -> {
         return RouteHolder.getGET(route);
@@ -91,17 +103,17 @@ class HttpServerHandler implements Runnable {
     }
   }
 
-  private HttpResponse createResponse(Optional<RouteHandler> handler, String method, String route) {
+  private HttpResponse createResponse(Optional<RouteHandler<?>> handler, String method, String route) {
     if (handler.isPresent()) {
       return invokeHandlerReturnResponse(handler.get());
     } else {
-      return HttpResponse.notFound(method.toString() + " " + route + " " + "doesn't exist.");
+      return HttpResponse.notFound(method + " " + route + " " + "doesn't exist.");
     }
   }
 
-  private HttpResponse invokeHandlerReturnResponse(RouteHandler handler) {
+  private HttpResponse invokeHandlerReturnResponse(RouteHandler<?> handler) {
     try {
-      String jsonResult = serializeFunctionResult(handler.handle());
+      var jsonResult = serializeFunctionResult(handler.handle());
       return HttpResponse.ok(jsonResult);
     } catch (Exception e) {
       return HttpResponse.internalServerError(e.getMessage());
@@ -109,7 +121,7 @@ class HttpServerHandler implements Runnable {
   }
 
   private String serializeFunctionResult(Object result) throws JsonProcessingException {
-    String returnValue = "";
+    var returnValue = "";
     if (result != null) {
       returnValue = objectMapper.writeValueAsString(result);
     }

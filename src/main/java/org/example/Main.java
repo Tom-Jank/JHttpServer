@@ -1,26 +1,15 @@
 package org.example;
 
 import org.example.httpserver.HttpServer;
-import org.example.httpserver.routing.RouteHandler;
 import org.example.httpserver.routing.RouteHolder;
 
+// todo write logic for passing path variable with endpoints
+// todo write logic for passing query parameters with endpoints
 public class Main {
   public static void main(String[] args) {
     final HttpServer server = new HttpServer(8080);
     RouteHolder.bindGET("/test", () -> "Hello world!");
-    RouteHolder.bindGET("/void", RouteHandler.bindVoid(Main::doSomethingWithoutReturn));
     RouteHolder.bindPOST("/post", () -> "Post method handled!");
-    RouteHolder.bindPOST("/voidPost", RouteHandler.bindVoid(Main::doSomethingWithoutReturn));
     server.listen();
-  }
-
-  public static void doSomethingWithoutReturn() {
-    System.out.println("I'm done");
-  }
-
-  //todo handle post method when argument is needed for handler execution
-  //for now just text plain is sufficient, later handle json parsing
-  public static String postHandler(String argument) {
-    return "post method handled!";
   }
 }
